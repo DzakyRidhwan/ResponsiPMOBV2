@@ -1,0 +1,348 @@
+📊 FIREBASE STRUCTURE & SETUP GUIDE
+
+================================================================================
+FIRESTORE/REALTIME DATABASE STRUCTURE
+================================================================================
+
+PURCHASE NODE STRUCTURE:
+─────────────────────────────────────
+
+Realtime Database
+│
+└── purchases (NODE UTAMA)
+    │
+    └── {userId} (User ID dari Firebase Auth)
+        │
+        └── {orderId} (Unik per transaksi, format: ORDER-timestamp)
+            │
+            ├── id: String 
+            │   └─ Contoh: "ORDER-1672764900000"
+            │
+            ├── title: String
+            │   └─ Contoh: "Wolfish Teeth Yo Yo"
+            │
+            ├── price: Double
+            │   └─ Contoh: 264830.3
+            │
+            ├── timestamp: Long
+            │   └─ Contoh: 1672764900000
+            │   └─ Format: Unix timestamp dalam milliseconds
+            │
+            ├── status: String
+            │   └─ Enum: "SUCCESS" | "PENDING" | "FAILED"
+            │   └─ Diupdate dari webhook Midtrans
+            │
+            ├── method: String
+            │   └─ Contoh: "QRIS"
+            │   └─ Bisa: QRIS, Transfer Bank, Kartu Kredit, dll
+            │
+            ├── orderId: String
+            │   └─ Contoh: "ORDER-1672764900000"
+            │   └─ Same as parent node key
+            │
+            ├── transactionId: String
+            │   └─ Contoh: "xxxxxxxxxx-xxxxxxxxxx"
+            │   └─ Dari Midtrans (diupdate via webhook)
+            │
+            └── bookCover: String
+                └─ Contoh: "https://lh3.googleusercontent.com/..."
+                └─ URL ke image cover buku
+
+================================================================================
+SAMPLE JSON DATA
+================================================================================
+
+{
+  "purchases": {
+    "user_123abc": {
+      "ORDER-1672764900000": {
+        "id": "ORDER-1672764900000",
+        "title": "Wolfish Teeth Yo Yo",
+        "price": 264830.3,
+        "timestamp": 1672764900000,
+        "status": "SUCCESS",
+        "method": "QRIS",
+        "orderId": "ORDER-1672764900000",
+        "transactionId": "xxxxx",
+        "bookCover": "https://..."
+      },
+      "ORDER-1672777200000": {
+        "id": "ORDER-1672777200000",
+        "title": "Buku Lainnya",
+        "price": 89000,
+        "timestamp": 1672777200000,
+        "status": "PENDING",
+        "method": "QRIS",
+        "orderId": "ORDER-1672777200000",
+        "transactionId": "",
+        "bookCover": "https://..."
+      }
+    }
+  }
+}
+
+================================================================================
+FIREBASE REALTIME DATABASE RULES
+================================================================================
+
+RECOMMENDED RULES:
+──────────────────
+
+{
+  "rules": {
+    "purchases": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        "status": {
+          ".validate": "newData.val() === 'SUCCESS' || newData.val() === 'PENDING' || newData.val() === 'FAILED'"
+        }
+      }
+    },
+    "orders": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    }
+  }
+}
+
+PENJELASAN:
+───────────
+• $uid = user ID dari Firebase Authentication
+• ".read": "$uid === auth.uid" 
+  → User hanya bisa baca data mereka sendiri
+  
+• ".write": "$uid === auth.uid"
+  → User hanya bisa tulis data mereka sendiri
+
+• Ubah rules di Firebase Console:
+  1. Klik Database
+  2. Klik Tab "Rules"
+  3. Copy-paste rules di atas
+  4. Klik "Publish"
+
+================================================================================
+SETUP DI FIREBASE CONSOLE
+================================================================================
+
+STEP 1: BUAT FIREBASE PROJECT
+──────────────────────────────
+1. Buka https://console.firebase.google.com/
+2. Klik "Create Project"
+3. Nama: "2TAX" (atau nama project Anda)
+4. Enable Google Analytics (optional)
+5. Create Project
+
+STEP 2: ENABLE REALTIME DATABASE
+─────────────────────────────────
+1. Di sidebar, klik "Build" → "Realtime Database"
+2. Klik "Create Database"
+3. Location: Southeast Asia (Singapore) - untuk performa optimal
+4. Pilih "Start in test mode" (JANGAN gunakan di production!)
+5. Enable
+
+STEP 3: SETUP AUTHENTICATION
+─────────────────────────────
+1. Di sidebar, klik "Build" → "Authentication"
+2. Klik "Get Started"
+3. Klik "Email/Password"
+4. Enable Email/Password dan Save
+5. Optional: Tambah Google Sign-in, etc
+
+STEP 4: UPDATE FIREBASE RULES
+──────────────────────────────
+1. Klik tab "Rules" di Realtime Database
+2. Replace dengan rules dari section di atas
+3. Klik "Publish"
+
+STEP 5: DOWNLOAD google-services.json
+──────────────────────────────────────
+1. Di Firebase Console, klik Settings ⚙️
+2. Klik "Project Settings"
+3. Di tab "General", scroll ke bawah
+4. Klik "google-services.json" download
+5. Copy ke folder: app/google-services.json
+
+STEP 6: SETUP MIDTRANS WEBHOOK (PENTING!)
+──────────────────────────────────────────
+1. Buka Midtrans Dashboard
+2. Settings → HTTP Notifications
+3. Masukkan endpoint: https://your-server.com/webhook
+4. Event: Notification URL
+5. Webhook akan update status ke Firebase
+
+================================================================================
+QUERY DATA DI FIREBASE
+================================================================================
+
+KOD KOTLIN UNTUK LOAD DATA:
+───────────────────────────
+
+// Load semua purchases user
+val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+val dbRef = FirebaseDatabase.getInstance()
+    .getReference("purchases")
+    .child(uid)
+
+dbRef.addValueEventListener(object : ValueEventListener {
+    override fun onDataChange(snapshot: DataSnapshot) {
+        for (data in snapshot.children) {
+            val purchase = data.getValue(Purchase::class.java)
+            if (purchase != null) {
+                // Process purchase
+            }
+        }
+    }
+    
+    override fun onCancelled(error: DatabaseError) {
+        // Handle error
+    }
+})
+
+// Load purchase dengan status SUCCESS only
+dbRef.orderByChild("status")
+    .equalTo("SUCCESS")
+    .addValueEventListener(...)
+
+================================================================================
+STRUKTUR ORDERS NODE (INTERNAL)
+================================================================================
+
+Untuk tracking internal:
+
+orders/
+  {userId}/
+    ORDER-timestamp/
+      ├── order_id: String
+      ├── title: String
+      ├── price: Double
+      ├── timestamp: Long
+      ├── status_pembayaran: "pending" | "success" | "failed"
+      ├── method: "Midtrans"
+      ├── snap_token: String (dari Midtrans)
+      └── redirect_url: String (Payment gateway URL)
+
+Note: Node ini biasanya tidak ditampilkan ke user, hanya untuk tracking
+
+================================================================================
+DATA VALIDATION
+================================================================================
+
+VALIDASI YANG DILAKUKAN:
+
+1. PRICE:
+   • Must be > 0
+   • Type: Double
+
+2. TIMESTAMP:
+   • Must be > 0
+   • Type: Long (milliseconds)
+
+3. STATUS:
+   • Only: "SUCCESS", "PENDING", "FAILED"
+   • Type: String
+
+4. METHOD:
+   • Examples: "QRIS", "Transfer", "Kartu Kredit"
+   • Type: String
+
+5. TITLE:
+   • Must not be empty
+   • Type: String
+
+================================================================================
+PAGINATION (OPTIONAL FUTURE)
+================================================================================
+
+Jika ada banyak data, bisa implement pagination:
+
+// Load 10 data terbaru
+dbRef.orderByChild("timestamp")
+    .limitToLast(10)
+    .addValueEventListener(...)
+
+// Dengan offset (page 2)
+dbRef.orderByChild("timestamp")
+    .limitToLast(20)  // 10 data + 10 offset
+    .addValueEventListener(...)
+
+================================================================================
+MONITORING & DEBUGGING
+================================================================================
+
+DI FIREBASE CONSOLE:
+
+1. Buka Database
+2. Lihat struktur data real-time
+3. Klik pada node untuk lihat value
+4. Lihat "Rules Simulator" untuk test permissions
+5. Lihat "Storage" untuk tracking usage
+
+DI ANDROID STUDIO (Logcat):
+
+Log.d("PaymentActivity", "Purchase history saved")
+Log.e("HistoryFragment", "Error loading: ${error.message}")
+
+================================================================================
+BACKUP & EXPORT
+================================================================================
+
+BACKUP DATA (Optional):
+
+1. Realtime Database → Settings
+2. Backups
+3. Klik "Create Backup"
+4. Data akan di-backup ke Cloud Storage
+
+EXPORT DATA:
+
+1. Firebase Console → Realtime Database
+2. Kebab menu (⋮) → Export JSON
+3. Download data sebagai JSON file
+
+================================================================================
+PRICING
+================================================================================
+
+Firebase Realtime Database:
+• Free tier: 100 concurrent connections, 1GB storage
+• Pay-as-you-go: $1 per GB downloaded, $5 per GB stored
+
+Untuk app kecil, free tier biasanya cukup!
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+ERROR: "Permission denied"
+───────────────────────────
+Solusi:
+1. Check Firebase Rules (update dengan rules di atas)
+2. Pastikan user sudah login
+3. Check UID di rules = auth.uid
+
+ERROR: "Network error"
+──────────────────────
+Solusi:
+1. Check internet connection
+2. Check Firebase Console status
+3. Pastikan google-services.json correct
+
+ERROR: Data tidak muncul
+─────────────────────────
+Solusi:
+1. Verifikasi data ada di Firebase Console
+2. Check uid = auth.uid yang sekarang login
+3. Check apakah data sudah saved (check PaymentActivity logs)
+4. Refresh app (pull-to-refresh atau restart)
+
+ERROR: Crash saat load data
+────────────────────────────
+Solusi:
+1. Check LogCat untuk error message
+2. Pastikan Purchase.kt compatible dengan data
+3. Check database listener di-detach (di onDestroy)
+
+================================================================================

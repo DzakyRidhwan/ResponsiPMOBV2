@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "754606536354",
+    "firebase_url": "https://projectakhirpmob-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "projectakhirpmob",
+    "storage_bucket": "projectakhirpmob.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754606536354:android:c56f851c1f723ca83809fb",
+        "android_client_info": {
+          "package_name": "com.pmob.projectakhirpemrogramanmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHJs8I3VOx3VFVLziPFl50SragbrNXBQg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
