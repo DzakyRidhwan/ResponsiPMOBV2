@@ -126,7 +126,6 @@ class EditProfileActivity : AppCompatActivity() {
     private fun setupActions() {
         binding.btnBack.setOnClickListener { finish() }
 
-        // 📷 Klik teks "Ubah Foto Profil"
         binding.btnChangePhoto.setOnClickListener {
             showPhotoOptionDialog()
         }
@@ -159,13 +158,11 @@ class EditProfileActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 ref.downloadUrl.addOnSuccessListener { url ->
 
-                    // Firebase Database
                     database.child("users")
                         .child(uid)
                         .child("photo")
                         .setValue(url.toString())
 
-                    // Local cache
                     getSharedPreferences(prefsName(), MODE_PRIVATE)
                         .edit()
                         .putString("photo", url.toString())

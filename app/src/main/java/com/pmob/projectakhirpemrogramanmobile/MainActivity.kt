@@ -16,10 +16,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Default fragment
         loadFragment(HomeFragment())
 
-        // INIT MIDTRANS (SANDBOX)
         SdkUIFlowBuilder.init()
             .setClientKey("SB-Mid-client-s3Fpp8DYlCOiqsAL")
             .setContext(this)

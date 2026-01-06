@@ -18,9 +18,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
-import com.pmob.projectakhirpemrogramanmobile.EditProfileActivity
-import com.pmob.projectakhirpemrogramanmobile.LoginActivity
-import com.pmob.projectakhirpemrogramanmobile.R
 import com.pmob.projectakhirpemrogramanmobile.databinding.FragmentProfileBinding
 import com.pmob.projectakhirpemrogramanmobile.utils.ImageUtils
 

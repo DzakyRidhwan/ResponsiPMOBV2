@@ -151,7 +151,7 @@ class PaymentActivity : AppCompatActivity() {
         orderData["title"] = bookTitle
         orderData["price"] = bookPrice
         orderData["timestamp"] = System.currentTimeMillis()
-        orderData["status_pembayaran"] = "pending"
+        orderData["status_pembayaran"] = "Success"
         orderData["method"] = "Midtrans"
         orderData["snap_token"] = snapToken
         orderData["redirect_url"] = redirectUrl
@@ -177,8 +177,8 @@ class PaymentActivity : AppCompatActivity() {
         purchaseData["title"] = bookTitle
         purchaseData["price"] = bookPrice
         purchaseData["timestamp"] = System.currentTimeMillis()
-        purchaseData["status"] = "pending"
-        purchaseData["method"] = "QRIS" // Default method
+        purchaseData["status"] = "Success"
+        purchaseData["method"] = "QRIS"
         purchaseData["orderId"] = currentOrderId ?: ""
         purchaseData["transactionId"] = ""
         purchaseData["bookCover"] = bookCover ?: ""
@@ -199,7 +199,7 @@ class PaymentActivity : AppCompatActivity() {
 
             Toast.makeText(
                 this,
-                "Silakan selesaikan pembayaran",
+                "Silahkan selesaikan pembayaran",
                 Toast.LENGTH_LONG
             ).show()
 
